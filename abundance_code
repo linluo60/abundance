@@ -1,0 +1,92 @@
+# 怎么检查每个 MAG 在各样本中的丰度？
+# goal: 计算每个 MAG 在每个样本中的相对丰度Relative abundance。
+# 将各样本的 “去宿主的reads” 重新比对回每个 MAG 的基因组，然后统计每个MAG 被 mapping 的 reads 数量，再标准化。
+
+# part_1
+# 用 Bowtie2 建立索引并比对
+cat BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa > all_MAGs.fa
+bowtie2-build all_MAGs.fa all_MAGs_index
+
+nano bowtie2.slurm
+
+#!/bin/bash
+#SBATCH --job-name=bowtie2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --mem=150gb
+#SBATCH --time=24:00:00
+#SBATCH --partition=yinlab,batch
+#SBATCH --output=bowtie2.%J.out
+#SBATCH --error=bowtie2.%J.err
+
+ml bowtie2/2.5.1
+
+bowtie2 -x all_MAGs_index \
+  -1 /work/yinlab/linluo/project/part2_remove_algae_genomes/unmapped_1.fastq \
+  -2 /work/yinlab/linluo/project/part2_remove_algae_genomes/unmapped_2.fastq \
+  -S sample1_vs_MAGs.sam \
+  -p 16
+
+# 你会得到 sample1_vs_MAGs.sam
+
+
+
+# part_2
+# 把 Bowtie2 比对的输出结果（SAM 文件）转换成一种更高效、更容易读取的格式（BAM），并按顺序整理，方便后续 CoverM 统计丰度。
+
+nano samtools.slurm
+
+#!/bin/bash
+#SBATCH --job-name=samtools_sort
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=150G
+#SBATCH --time=24:00:00
+#SBATCH --partition=yinlab,batch
+#SBATCH --output=samtools.%j.out
+#SBATCH --error=samtools.%j.err
+
+ml samtools/1.3
+
+samtools view -bS sample1_vs_MAGs.sam | samtools sort -@ 8 -o sample1_vs_MAGs.sorted.bam
+
+samtools index sample1_vs_MAGs.sorted.bam
+
+# 你会得到 sample1_vs_MAGs.sorted.bam 和 sample1_vs_MAGs.sorted.bam.bai
+
+
+
+# part_3
+# 计算每个 MAG 的丰度abundance
+
+nano coverm.slurm
+
+#!/bin/bash
+#SBATCH --job-name=coverm
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=150G
+#SBATCH --time=24:00:00
+#SBATCH --partition=yinlab,batch
+#SBATCH --output=coverm.%j.out
+#SBATCH --error=coverm.%j.err
+
+ml coverm
+
+coverm genome \
+  -b /work/yinlab/linluo/project/abundance/sample1_vs_MAGs.sorted.bam \
+  --genome-fasta-files /work/yinlab/linluo/project/abundance/all_MAGs.fa \
+  --methods relative_abundance count mean \
+  --min-covered-fraction 0 \
+  -t 16 \
+  > /work/yinlab/linluo/project/abundance/sample1_coverm.tsv
+
+# 你会得到 sample1_coverm.tsv
+
+
+
+
+
+
