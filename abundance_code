@@ -84,7 +84,7 @@ coverm genome \
   -t 16 \
   > /work/yinlab/linluo/project/abundance/sample1_coverm_bins.tsv
 
-# 你会得到 sample1_coverm.tsv
+# 你会得到 sample1_coverm_bins.tsv
 
 
 
