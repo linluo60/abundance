@@ -63,7 +63,7 @@ samtools index sample1_vs_MAGs.sorted.bam
 nano coverm.slurm
 
 #!/bin/bash
-#SBATCH --job-name=coverm
+#SBATCH --job-name=coverm_bins
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
@@ -77,11 +77,12 @@ ml coverm
 
 coverm genome \
   -b /work/yinlab/linluo/project/abundance/sample1_vs_MAGs.sorted.bam \
-  --genome-fasta-files /work/yinlab/linluo/project/abundance/all_MAGs.fa \
+  --genome-fasta-directory /work/yinlab/linluo/project/part4_binning/megahit/BIN_REFINEMENT_megahit/metawrap_70_10_bins \
+  --genome-fasta-extension fa \
   --methods relative_abundance count mean \
   --min-covered-fraction 0 \
   -t 16 \
-  > /work/yinlab/linluo/project/abundance/sample1_coverm.tsv
+  > /work/yinlab/linluo/project/abundance/sample1_coverm_bins.tsv
 
 # 你会得到 sample1_coverm.tsv
 
