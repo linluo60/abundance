@@ -5,6 +5,7 @@
 # part_1
 # 用 Bowtie2 建立索引并比对
 cat BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa > all_MAGs.fa
+ml bowtie/2.5
 bowtie2-build all_MAGs.fa all_MAGs_index
 
 nano bowtie2.slurm
